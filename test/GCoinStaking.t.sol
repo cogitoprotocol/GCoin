@@ -49,7 +49,6 @@ contract GCoinStakingTest is Test {
         staking = new GCoinStaking(
             address(gcoin),
             address(cgv),
-            3 days,
             10
         );
     }
@@ -58,7 +57,7 @@ contract GCoinStakingTest is Test {
         vm.startPrank(stakeholder);
         gcoin.approve(address(staking), 1e18);
         uint256 gcoinBefore = gcoin.balanceOf(stakeholder);
-        staking.stake(1e18);
+        staking.stake(1e18, 365 days);
         (uint256 totalStaked, uint256 outstandingCGV) = staking.getUserStakingInfo(stakeholder);
 
         // console2.log("after stake", gcoin.balanceOf(address(staking)), gcoin.balanceOf(stakeholder));
