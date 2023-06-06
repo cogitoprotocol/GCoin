@@ -42,12 +42,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     event Paused();
     event Unpaused();
 
-    constructor(
-        address _gcoinToken,
-        address _cgvToken,
-        uint256 _stakingPeriod,
-        uint256 _annualRewardRate
-    ) {
+    constructor(address _gcoinToken, address _cgvToken, uint256 _stakingPeriod, uint256 _annualRewardRate) {
         gcoinToken = IERC20(_gcoinToken);
         cgvToken = IERC20(_cgvToken);
         stakingPeriod = _stakingPeriod;
@@ -74,22 +69,13 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
 
         while (i < userInfo.stakes.length) {
             Stake storage currentStake = userInfo.stakes[i];
-            uint256 stakedDuration = block.timestamp.sub(
-                currentStake.timestamp
-            );
+            uint256 stakedDuration = block.timestamp.sub(currentStake.timestamp);
             if (stakedDuration >= stakingPeriod) {
-                uint256 reward = currentStake
-                    .amount
-                    .mul(annualRewardRate)
-                    .div(100)
-                    .mul(stakedDuration)
-                    .div(365 days);
+                uint256 reward = currentStake.amount.mul(annualRewardRate).div(100).mul(stakedDuration).div(365 days);
                 totalRewards = totalRewards.add(reward);
                 totalAmount = totalAmount.add(currentStake.amount);
 
-                userInfo.stakes[i] = userInfo.stakes[
-                    userInfo.stakes.length - 1
-                ];
+                userInfo.stakes[i] = userInfo.stakes[userInfo.stakes.length - 1];
                 userInfo.stakes.pop();
             } else {
                 i++;
@@ -109,11 +95,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         emit Withdrawn(msg.sender, totalAmount, totalRewards);
     }
 
-    function getUserStakingInfoList(address user)
-        external
-        view
-        returns (UserInfo memory)
-    {
+    function getUserStakingInfoList(address user) external view returns (UserInfo memory) {
         return userStakingInfo[user];
     }
 
@@ -124,10 +106,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     }
 
     // Owner can update the annual reward rate
-    function updateAnnualRewardRate(uint256 _annualRewardRate)
-        external
-        onlyOwner
-    {
+    function updateAnnualRewardRate(uint256 _annualRewardRate) external onlyOwner {
         annualRewardRate = _annualRewardRate;
         emit AnnualRewardRateUpdated(_annualRewardRate);
     }
@@ -142,27 +121,16 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         emit Unpaused();
     }
 
-    function getUserStakingInfo(address user)
-        public
-        view
-        returns (uint256 totalStaked, uint256 outstandingCGV)
-    {
+    function getUserStakingInfo(address user) public view returns (uint256 totalStaked, uint256 outstandingCGV) {
         UserInfo storage userInfo = userStakingInfo[user];
         totalStaked = userInfo.totalStaked;
         outstandingCGV = 0;
 
         for (uint256 i = 0; i < userInfo.stakes.length; i++) {
             Stake storage currentStake = userInfo.stakes[i];
-            uint256 stakedDuration = block.timestamp.sub(
-                currentStake.timestamp
-            );
+            uint256 stakedDuration = block.timestamp.sub(currentStake.timestamp);
             if (stakedDuration >= stakingPeriod) {
-                uint256 reward = currentStake
-                    .amount
-                    .mul(annualRewardRate)
-                    .div(100)
-                    .mul(stakedDuration)
-                    .div(365 days);
+                uint256 reward = currentStake.amount.mul(annualRewardRate).div(100).mul(stakedDuration).div(365 days);
                 outstandingCGV = outstandingCGV.add(reward);
             }
         }
@@ -173,9 +141,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         for (uint256 i = 0; i < userAddresses.length(); i++) {
             address user = userAddresses.at(i);
             (, uint256 outstandingCGV) = getUserStakingInfo(user);
-            totalOutstandingRewards = totalOutstandingRewards.add(
-                outstandingCGV
-            );
+            totalOutstandingRewards = totalOutstandingRewards.add(outstandingCGV);
         }
         return totalOutstandingRewards;
     }
