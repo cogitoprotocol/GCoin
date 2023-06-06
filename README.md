@@ -38,6 +38,7 @@ SEPOLIA_RPC_URL=...
 
 # anvil default account
 DEPLOYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+DEPLOYER=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 # your browser wallet, for frontend testing
 TEST_WALLET=...
@@ -65,4 +66,8 @@ Contract addresses will be saved to `deploy/localhost.json`:
 cat deploy/localhost.json
 ```
 
-This can now be used in the frontend.
+This can now be used in the frontend. You may need to send yourself some eth:
+
+```sh
+cast send --unlocked -f $DEPLOYER $TEST_WALLET --value 10ether
+```
