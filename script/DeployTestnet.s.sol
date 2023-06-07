@@ -27,7 +27,7 @@ contract DeployTestnetScript is Script {
         usdTest.mint(testWallet, 1_000_000e6);
 
         CGV cgv = new CGV();
-        cgv.mint(testWallet, 1_000_000_000e6);
+        cgv.mint(testWallet, 1_000_000e6);
 
         GCoin gcoin = new GCoin();
 
@@ -38,7 +38,12 @@ contract DeployTestnetScript is Script {
 
         gcoin.addStableCoin(address(usdTest));
 
-        GCoinStaking gCoinStaking = new GCoinStaking(address(gcoin), address(cgv), 10 minutes, 1);
+        GCoinStaking gCoinStaking = new GCoinStaking(
+            address(gcoin),
+            address(cgv),
+            100
+        );
+        cgv.mint(address(gCoinStaking), 10_000_000e6);
 
         vm.stopBroadcast();
 
@@ -47,7 +52,11 @@ contract DeployTestnetScript is Script {
         vm.serializeAddress(json, "Treasury", address(treasury));
         vm.serializeAddress(json, "CGV", address(cgv));
         vm.serializeAddress(json, "USDTest", address(usdTest));
-        string memory finalJson = vm.serializeAddress(json, "GCoinStaking", address(gCoinStaking));
+        string memory finalJson = vm.serializeAddress(
+            json,
+            "GCoinStaking",
+            address(gCoinStaking)
+        );
         string memory file = string.concat("./deploy/", network, ".json");
         vm.writeJson(finalJson, file);
         console.log("Contract addresses saved to %s", file);
