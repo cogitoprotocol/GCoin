@@ -51,6 +51,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     event Paused();
     event Unpaused();
 
+
     constructor(address _gcoinToken, address _cgvToken, uint256 _annualRewardRate) {
         gcoinToken = IERC20(_gcoinToken);
         cgvToken = IERC20(_cgvToken);
