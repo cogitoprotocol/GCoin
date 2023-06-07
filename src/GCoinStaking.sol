@@ -203,7 +203,9 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     //     emit StakingPeriodUpdated(_stakingPeriod);
     // }
 
-    // Owner can update the annual reward rate
+    /**
+     * @dev Owner can update the annual reward rate
+     */
     function updateAnnualRewardRate(
         uint256 _annualRewardRate
     ) external onlyOwner {
@@ -223,7 +225,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
 
     /**
      * @dev Returns the amount staked and pending rewards for a user,
-     * including vested rewards that have not yet unlocked
+     * including accrued rewards that have not yet unlocked
      */
     function getUserStakingInfo(
         address user
@@ -248,7 +250,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
 
     /**
      * @dev Returns the total pending rewards for all users,
-     * including vested rewards that have not yet unlocked
+     * including accrued rewards that have not yet unlocked
      */
     function getTotalOutstandingRewards() external view returns (uint256) {
         uint256 totalOutstandingRewards = 0;
@@ -275,6 +277,9 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         return totalStaked;
     }
 
+    /**
+     * @dev Converts the {value} originally denominated in {from} decimals to {to} decimals
+     */
     function _convertDecimals(
         uint256 value,
         uint8 from,
