@@ -6,23 +6,14 @@ import "openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPa
 import "forge-std/Test.sol";
 import "../src/GCoin.sol";
 import "../src/Treasury.sol";
-
-// Mock stablecoin contract with 6 decimals for testing
-contract MyStableCoin is ERC20PresetMinterPauser {
-    constructor() ERC20PresetMinterPauser("MyStableCoin", "MSC") {}
-
-    // Override decimals function to return 6 instead of default 18
-    function decimals() public view virtual override returns (uint8) {
-        return 6;
-    }
-}
+import "../src/USDTest.sol";
 
 // Test contract for GCoin
 contract GCoinTest is Test {
-    // Instances of ERC20PresetMinterPauser and MyStableCoin contracts to simulate various stablecoins
+    // Instances of ERC20PresetMinterPauser and UsdTest contracts to simulate various stablecoins
     ERC20PresetMinterPauser public stablecoin0;
     ERC20PresetMinterPauser public stablecoin1;
-    MyStableCoin public stablecoin6digit;
+    USDTest public stablecoin6digit;
 
     // Instance of GCoin contract to test
     GCoin public gcoin;
@@ -39,7 +30,7 @@ contract GCoinTest is Test {
         stablecoin1 = new ERC20PresetMinterPauser("T1", "T1");
         stablecoin1.mint(address(this), 100);
 
-        stablecoin6digit = new MyStableCoin();
+        stablecoin6digit = new USDTest();
         stablecoin6digit.mint(address(this), 1000000);
 
         // Deploy GCoin and Treasury contracts
