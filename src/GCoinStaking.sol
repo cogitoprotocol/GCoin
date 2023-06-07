@@ -48,11 +48,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     event Paused();
     event Unpaused();
 
-    constructor(
-        address _gcoinToken,
-        address _cgvToken,
-        uint256 _annualRewardRate
-    ) {
+    constructor(address _gcoinToken, address _cgvToken, uint256 _stakingPeriod, uint256 _annualRewardRate) {
         gcoinToken = IERC20(_gcoinToken);
         cgvToken = IERC20(_cgvToken);
         annualRewardRate = _annualRewardRate;
@@ -135,13 +131,6 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
             currentStake.timestamp
         );
         if (stakedDuration >= currentStake.duration) {
-            // uint256 reward = currentStake
-            //     .amount
-            //     .mul(annualRewardRate)
-            //     .div(100)
-            //     .mul(stakedDuration)
-            //     .div(365 days);
-
             uint256 reward = calculateReward(currentStake.amount, currentStake.duration);
             require(
                 cgvToken.balanceOf(address(this)) >= reward,
