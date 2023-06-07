@@ -8,7 +8,8 @@ import "../src/Treasury.sol";
 
 contract PauseGcoin is Script {
     function run() external {
-        string memory json = vm.readFile("./deploy/test.json");
+        string memory network = vm.envOr("NETWORK", string("localhost"));
+        string memory json = vm.readFile(string.concat("./deploy/", network, ".json"));
         address gcoinAddress = vm.parseJsonAddress(json, ".GCoin");
 
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");

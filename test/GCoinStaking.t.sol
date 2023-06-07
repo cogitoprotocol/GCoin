@@ -4,14 +4,16 @@ pragma solidity ^0.8.0;
 
 import "openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 import "forge-std/Test.sol";
+import "../src/CGV.sol";
 import "../src/GCoin.sol";
 import "../src/Treasury.sol";
 import "../src/GCoinStaking.sol";
 
 contract MockToken is ERC20PresetMinterPauser {
-    constructor(string memory name, string memory symbol)
-        ERC20PresetMinterPauser(name, symbol)
-    {}
+    constructor(
+        string memory name,
+        string memory symbol
+    ) ERC20PresetMinterPauser(name, symbol) {}
 }
 
 contract GCoinStakingTest is Test {
@@ -19,7 +21,7 @@ contract GCoinStakingTest is Test {
     Treasury public treasury;
     MockToken public stablecoin0;
 
-    MockToken public cgv;
+    CGV public cgv;
     GCoinStaking public staking;
     address public stakeholder;
 
@@ -29,7 +31,6 @@ contract GCoinStakingTest is Test {
         treasury = new Treasury(address(gcoin), msg.sender, arr, arr);
         // Set treasury address in the GCoin contract
         gcoin.setTreasury(address(treasury));
-
 
         // mint some gcoin
         stakeholder = address(111);
@@ -42,15 +43,11 @@ contract GCoinStakingTest is Test {
         vm.stopPrank();
 
         // set CGV tokens
-        cgv = new MockToken("CGV Token", "CGV");
+        cgv = new CGV();
 
-        cgv.mint(address(this), 1e18);
+        staking = new GCoinStaking(address(gcoin), address(cgv), 10);
 
-        staking = new GCoinStaking(
-            address(gcoin),
-            address(cgv),
-            10
-        );
+        cgv.mint(address(staking), 1e18);
     }
 
     function test_Stake() public {
@@ -58,13 +55,24 @@ contract GCoinStakingTest is Test {
         gcoin.approve(address(staking), 1e18);
         uint256 gcoinBefore = gcoin.balanceOf(stakeholder);
         staking.stake(1e18, 365 days);
-        (uint256 totalStaked, uint256 outstandingCGV) = staking.getUserStakingInfo(stakeholder);
+        (uint256 totalStaked, uint256 outstandingCGV) = staking
+            .getUserStakingInfo(stakeholder);
 
         // console2.log("after stake", gcoin.balanceOf(address(staking)), gcoin.balanceOf(stakeholder));
         assert(totalStaked == 1e18);
         assert(outstandingCGV == 0);
-        assert(gcoin.balanceOf(stakeholder) == gcoinBefore-1e18);
+        assert(gcoin.balanceOf(stakeholder) == gcoinBefore - 1e18);
 
         vm.stopPrank();
+    }
+
+    function test_StakeReward() public {
+        staking.updateAnnualRewardRate(10);
+
+        uint256 rewardRate = staking.calculateRewardRate(365 days);
+        assert(rewardRate == 15);
+
+        uint256 reward = staking.calculateReward(100e18, 365 days);
+        assert(reward == 15e6);
     }
 }
