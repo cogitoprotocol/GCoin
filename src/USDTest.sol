@@ -11,4 +11,9 @@ contract USDTest is ERC20PresetMinterPauser {
     function decimals() public view virtual override returns (uint8) {
         return 6;
     }
+
+    // Anyone can claim 1000
+    function claim() public {
+        _mint(msg.sender, 1000e6);
+    }
 }
