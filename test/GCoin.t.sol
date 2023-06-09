@@ -95,7 +95,9 @@ contract GCoinTest is Test {
         gcoin.stableCoinToGCoin(address(stablecoin6digit), 1000000);
 
         uint256 stableBalanceGcoin = stablecoin6digit.balanceOf(address(this));
-        uint256 stableBalanceTreasury = stablecoin6digit.balanceOf(gcoin.treasury());
+        uint256 stableBalanceTreasury = stablecoin6digit.balanceOf(
+            gcoin.treasury()
+        );
         assert(stableBalanceGcoin == 0);
         assert(stableBalanceTreasury == 1000000);
         // console2.log(stableBalanceGcoin, stableBalanceTreasury);
@@ -106,5 +108,26 @@ contract GCoinTest is Test {
         vm.startPrank(address(111));
         gcoin.mint(address(33), 100);
         vm.stopPrank();
+    }
+
+    function test_Redemption() public {
+        gcoin.updateGCoinValueManual(2e18);
+        gcoin.addStableCoin(address(stablecoin6digit));
+        stablecoin6digit.mint(gcoin.treasury(), 4e6);
+        gcoin.mint(address(this), 1e18);
+
+        vm.startPrank(address(gcoin.treasury()));
+        stablecoin6digit.approve(address(gcoin), 1e18);
+        vm.stopPrank();
+
+        gcoin.gcointToStable(address(stablecoin6digit), 1e18);
+
+        uint256 balanceGcoin = gcoin.balanceOf(address(this));
+        uint256 stableBalanceTreasury = stablecoin6digit.balanceOf(
+            gcoin.treasury()
+        );
+        assert(balanceGcoin == 0);
+        assert(stableBalanceTreasury > 2e6);
+        // console2.log(balanceGcoin, stableBalanceTreasury);
     }
 }
