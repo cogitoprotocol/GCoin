@@ -16,6 +16,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
 
     ERC20 public gcoinToken;
     ERC20 public cgvToken;
+    address public treasury;
 
     uint8 cgvDecimals;
     uint8 gcoinDecimals;
@@ -36,6 +37,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         uint256 timestamp;
         uint256 duration;
         uint256 rewardMultiplier;
+        uint256 claimedReward;
     }
 
     struct UserInfo {
@@ -66,6 +68,10 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         gcoinDecimals = gcoinToken.decimals();
     }
 
+    function setTreasury(address _treasury) public onlyOwner {
+        treasury = _treasury;
+    }
+
     // Users can stake GCoin tokens
     function stake(uint256 amount, uint256 duration) external whenNotPaused {
         require(
@@ -86,7 +92,8 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
                 amount: amount,
                 timestamp: block.timestamp,
                 duration: duration,
-                rewardMultiplier: rewardMultiplier
+                rewardMultiplier: rewardMultiplier,
+                claimedReward: 0
             })
         );
         userAddresses.add(msg.sender);
@@ -106,11 +113,13 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
                 currentStake.timestamp
             );
             if (stakedDuration >= currentStake.duration) {
-                uint256 reward = calculateReward(
+                uint256 unclaimedReward = calculateReward(
                     currentStake.amount,
-                    currentStake.duration
-                );
-                totalRewards = totalRewards.add(reward);
+                    currentStake.duration,
+                    currentStake.rewardMultiplier
+                ) - currentStake.claimedReward;
+
+                totalRewards = totalRewards.add(unclaimedReward);
                 totalAmount = totalAmount.add(currentStake.amount);
 
                 userInfo.stakes[i] = userInfo.stakes[
@@ -124,12 +133,13 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
 
         require(totalAmount > 0, "No staking rewards to claim.");
         require(
-            cgvToken.balanceOf(address(this)) >= totalRewards,
+            cgvToken.balanceOf(treasury) >= totalRewards,
             "Not enough CGV tokens to pay rewards. We are adding more. Please wait"
         );
 
         gcoinToken.safeTransfer(msg.sender, totalAmount);
-        cgvToken.safeTransfer(msg.sender, totalRewards);
+
+        cgvToken.safeTransferFrom(treasury, msg.sender, totalRewards);
 
         emit Withdrawn(msg.sender, totalAmount, totalRewards);
     }
@@ -143,23 +153,49 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         Stake storage currentStake = userInfo.stakes[index];
         uint256 stakedDuration = block.timestamp.sub(currentStake.timestamp);
         if (stakedDuration >= currentStake.duration) {
-            uint256 reward = calculateReward(
+            uint256 unclaimedReward = calculateReward(
                 currentStake.amount,
-                currentStake.duration
-            );
+                currentStake.duration,
+                currentStake.rewardMultiplier
+            ) - currentStake.claimedReward;
+
             require(
-                cgvToken.balanceOf(address(this)) >= reward,
+                cgvToken.balanceOf(treasury) >= unclaimedReward,
                 "Not enough CGV tokens to pay rewards. We are adding more. Please wait"
             );
 
             gcoinToken.safeTransfer(msg.sender, currentStake.amount);
-            cgvToken.safeTransfer(msg.sender, reward);
+            cgvToken.safeTransferFrom(treasury, msg.sender, unclaimedReward);
 
             userInfo.stakes[index] = userInfo.stakes[
                 userInfo.stakes.length - 1
             ];
             userInfo.stakes.pop();
-            emit Withdrawn(msg.sender, currentStake.amount, reward);
+            emit Withdrawn(msg.sender, currentStake.amount, unclaimedReward);
+        }
+    }
+
+    // Users can withdraw their matured award only
+    function withdrawAwardSpecific(
+        uint256 index
+    ) external nonReentrant whenNotPaused {
+        UserInfo storage userInfo = userStakingInfo[msg.sender];
+
+        Stake storage currentStake = userInfo.stakes[index];
+        uint256 stakedDuration = block.timestamp.sub(currentStake.timestamp);
+        if (stakedDuration >= currentStake.duration) {
+            uint256 unclaimedReward = calculateReward(
+                currentStake.amount,
+                currentStake.duration,
+                currentStake.rewardMultiplier
+            ) - currentStake.claimedReward;
+
+            require(
+                cgvToken.balanceOf(address(this)) >= unclaimedReward,
+                "Not enough CGV tokens to pay rewards. We are adding more. Please wait"
+            );
+            currentStake.claimedReward = unclaimedReward;
+            cgvToken.safeTransferFrom(treasury, msg.sender, unclaimedReward);
         }
     }
 
@@ -168,11 +204,12 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
      */
     function calculateReward(
         uint256 amount,
-        uint256 duration
+        uint256 duration,
+        uint256 rewardMultiplier
     ) public view returns (uint256) {
         return
             _convertDecimals(amount, gcoinDecimals, cgvDecimals)
-                .mul(calculateRewardRate(duration))
+                .mul(rewardMultiplier)
                 .mul(duration)
                 .div(365 days)
                 .div(100);
@@ -197,12 +234,6 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         return userStakingInfo[user];
     }
 
-    // Owner can update the staking period
-    // function updateStakingPeriod(uint256 _stakingPeriod) external onlyOwner {
-    //     stakingPeriod = _stakingPeriod;
-    //     emit StakingPeriodUpdated(_stakingPeriod);
-    // }
-
     /**
      * @dev Owner can update the annual reward rate
      */
@@ -211,6 +242,24 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     ) external onlyOwner {
         annualRewardRate = _annualRewardRate;
         emit AnnualRewardRateUpdated(_annualRewardRate);
+    }
+
+    /**
+     * @dev Owner can update the min staking duration
+     */
+    function update_min_staking_duration(
+        uint256 _min_staking_duration
+    ) external onlyOwner {
+        MIN_STAKING_DURATION = _min_staking_duration;
+    }
+
+    /**
+     * @dev Owner can update the min staking duration
+     */
+    function update_max_staking_duration(
+        uint256 _max_staking_duration
+    ) external onlyOwner {
+        MAX_STAKING_DURATION = _max_staking_duration;
     }
 
     function pause() external onlyOwner {
@@ -239,11 +288,14 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
             uint256 stakedDuration = block.timestamp.sub(
                 currentStake.timestamp
             );
-            uint256 reward = calculateReward(
+
+            uint256 unclaimedReward = calculateReward(
                 currentStake.amount,
-                stakedDuration
-            );
-            outstandingCGV = outstandingCGV.add(reward);
+                stakedDuration,
+                currentStake.rewardMultiplier
+            ) - currentStake.claimedReward;
+
+            outstandingCGV = outstandingCGV.add(unclaimedReward);
             totalStaked = totalStaked.add(currentStake.amount);
         }
     }

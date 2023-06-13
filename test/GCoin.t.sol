@@ -51,14 +51,14 @@ contract GCoinTest is Test {
     // Test that minting fails with an invalid stablecoin
     function test_MintWithInvalid() public {
         vm.expectRevert();
-        gcoin.stableCoinToGCoin(address(stablecoin0), 10);
+        gcoin.depositStableCoin(address(stablecoin0), 10);
     }
 
     // Test that minting succeeds with a valid stablecoin
     function test_Mint() public {
         gcoin.addStableCoin(address(stablecoin1));
         stablecoin1.approve(address(gcoin), 100);
-        gcoin.stableCoinToGCoin(address(stablecoin1), 100);
+        gcoin.depositStableCoin(address(stablecoin1), 100);
 
         uint256 gcoinBalance = gcoin.balanceOf(address(this));
         assertGt(gcoinBalance, 0);
@@ -70,7 +70,7 @@ contract GCoinTest is Test {
     function test_Mint_6digit() public {
         gcoin.addStableCoin(address(stablecoin6digit));
         stablecoin6digit.approve(address(gcoin), 1000000);
-        gcoin.stableCoinToGCoin(address(stablecoin6digit), 1000000);
+        gcoin.depositStableCoin(address(stablecoin6digit), 1000000);
 
         uint256 gcoinBalance = gcoin.balanceOf(address(this));
         assert(gcoinBalance == 990000000000000000);
@@ -81,7 +81,7 @@ contract GCoinTest is Test {
         gcoin.updateGCoinValueManual(2e18);
         gcoin.addStableCoin(address(stablecoin6digit));
         stablecoin6digit.approve(address(gcoin), 1000000);
-        gcoin.stableCoinToGCoin(address(stablecoin6digit), 1000000);
+        gcoin.depositStableCoin(address(stablecoin6digit), 1000000);
 
         uint256 gcoinBalance = gcoin.balanceOf(address(this));
         assert(gcoinBalance == 495000000000000000);
@@ -92,7 +92,7 @@ contract GCoinTest is Test {
         gcoin.updateGCoinValueManual(2e18);
         gcoin.addStableCoin(address(stablecoin6digit));
         stablecoin6digit.approve(address(gcoin), 1000000);
-        gcoin.stableCoinToGCoin(address(stablecoin6digit), 1000000);
+        gcoin.depositStableCoin(address(stablecoin6digit), 1000000);
 
         uint256 stableBalanceGcoin = stablecoin6digit.balanceOf(address(this));
         uint256 stableBalanceTreasury = stablecoin6digit.balanceOf(
@@ -120,7 +120,7 @@ contract GCoinTest is Test {
         stablecoin6digit.approve(address(gcoin), 1e18);
         vm.stopPrank();
 
-        gcoin.gcointToStable(address(stablecoin6digit), 1e18);
+        gcoin.withdrawStableCoin(address(stablecoin6digit), 1e18);
 
         uint256 balanceGcoin = gcoin.balanceOf(address(this));
         uint256 stableBalanceTreasury = stablecoin6digit.balanceOf(

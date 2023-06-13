@@ -39,7 +39,7 @@ contract GCoinStakingTest is Test {
         gcoin.addStableCoin(address(stablecoin0));
         vm.startPrank(stakeholder);
         stablecoin0.approve(address(gcoin), 2e18);
-        gcoin.stableCoinToGCoin(address(stablecoin0), 2e18);
+        gcoin.depositStableCoin(address(stablecoin0), 2e18);
         vm.stopPrank();
 
         // set CGV tokens
@@ -72,7 +72,7 @@ contract GCoinStakingTest is Test {
         uint256 rewardRate = staking.calculateRewardRate(365 days);
         assert(rewardRate == 15);
 
-        uint256 reward = staking.calculateReward(100e18, 365 days);
+        uint256 reward = staking.calculateReward(100e18, 365 days, rewardRate);
         assert(reward == 15e6);
     }
 }

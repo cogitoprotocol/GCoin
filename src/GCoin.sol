@@ -62,7 +62,7 @@ contract GCoin is ERC20, Ownable, Pausable {
         return gcoinAmount;
     }
 
-    function stableCoinToGCoin(
+    function depositStableCoin(
         address token,
         uint256 amount
     ) public whenNotPaused {
@@ -107,7 +107,7 @@ contract GCoin is ERC20, Ownable, Pausable {
                 .div(100);
     }
 
-    function gcointToStable(
+    function withdrawStableCoin(
         address token,
         uint256 amount
     ) public whenNotPaused {
