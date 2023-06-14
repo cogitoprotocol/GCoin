@@ -40,6 +40,15 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         uint256 claimedReward;
     }
 
+    struct StakeWithUnclaimed {
+        uint256 amount;
+        uint256 timestamp;
+        uint256 duration;
+        uint256 rewardMultiplier;
+        uint256 claimedReward;
+        uint256 unclaimedReward;
+    }
+
     struct UserInfo {
         Stake[] stakes;
     }
@@ -228,12 +237,6 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
             );
     }
 
-    function getUserStakingInfoList(
-        address user
-    ) external view returns (UserInfo memory) {
-        return userStakingInfo[user];
-    }
-
     /**
      * @dev Owner can update the annual reward rate
      */
@@ -270,6 +273,42 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     function unpause() external onlyOwner {
         _unpause();
         emit Unpaused();
+    }
+
+    /**
+     * @dev Returns the list of user stakes including accrued rewards
+     */
+    function getUserStakingInfoList(
+        address user
+    ) external view returns (StakeWithUnclaimed[] memory) {
+        UserInfo storage userInfo = userStakingInfo[user];
+        StakeWithUnclaimed[] memory stakes = new StakeWithUnclaimed[](
+            userInfo.stakes.length
+        );
+
+        for (uint256 i = 0; i < userInfo.stakes.length; i++) {
+            Stake storage currentStake = userInfo.stakes[i];
+            uint256 stakedDuration = block.timestamp.sub(
+                currentStake.timestamp
+            );
+
+            uint256 unclaimedReward = calculateReward(
+                currentStake.amount,
+                stakedDuration,
+                currentStake.rewardMultiplier
+            ) - currentStake.claimedReward;
+
+            stakes[i] = StakeWithUnclaimed({
+                amount: currentStake.amount,
+                timestamp: currentStake.timestamp,
+                duration: currentStake.duration,
+                rewardMultiplier: currentStake.rewardMultiplier,
+                claimedReward: currentStake.claimedReward,
+                unclaimedReward: unclaimedReward
+            });
+        }
+
+        return stakes;
     }
 
     /**

@@ -96,10 +96,7 @@ contract GCoinStakingTest is Test {
         vm.warp(t0 + 30 days);
 
         assert(
-            staking
-                .getUserStakingInfoList(stakeholder)
-                .stakes[0]
-                .claimedReward == 0
+            staking.getUserStakingInfoList(stakeholder)[0].claimedReward == 0
         );
         assert(cgv.balanceOf(stakeholder) == 0);
 
@@ -107,10 +104,7 @@ contract GCoinStakingTest is Test {
 
         assert(cgv.balanceOf(stakeholder) == 8219);
         assert(
-            staking
-                .getUserStakingInfoList(stakeholder)
-                .stakes[0]
-                .claimedReward == 8219
+            staking.getUserStakingInfoList(stakeholder)[0].claimedReward == 8219
         );
 
         vm.warp(t0 + 60 days);
@@ -118,10 +112,8 @@ contract GCoinStakingTest is Test {
         staking.withdrawRewardSpecific(0);
         assert(cgv.balanceOf(stakeholder) == 8219 * 2);
         assert(
-            staking
-                .getUserStakingInfoList(stakeholder)
-                .stakes[0]
-                .claimedReward == 8219 * 2
+            staking.getUserStakingInfoList(stakeholder)[0].claimedReward ==
+                8219 * 2
         );
 
         vm.stopPrank();

@@ -49,6 +49,11 @@ contract DeployTestnetScript is Script {
             100
         );
         gCoinStaking.setTreasury(address(treasury));
+        treasury.approveFor(
+            address(cgv),
+            address(gCoinStaking),
+            type(uint256).max
+        );
 
         vm.stopBroadcast();
 
