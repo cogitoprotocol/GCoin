@@ -24,7 +24,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     // Base of 100, ie. 20% = 20
     uint256 public annualRewardRate;
 
-    uint256 public MIN_STAKING_DURATION = 7 days;
+    uint256 public MIN_STAKING_DURATION = 1 days;
     uint256 public MAX_STAKING_DURATION = 4 * 365 days;
     /*
     this scale 50 means 0.5, which means new_reward_rate = reward_rate + 0.5 * orig_reward_rate * time
