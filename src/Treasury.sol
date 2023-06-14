@@ -42,10 +42,21 @@ contract Treasury is Ownable {
         TM = _newTM;
     }
 
-    function defendLowerBound(uint256 amount, address stableCoin)
-        external
-        onlyTM
-    {
+    /**
+     * @dev Approve spending for token, eg. for GCoin to spend stablecoins for redemptions
+     */
+    function approveFor(
+        address token,
+        address spender,
+        uint256 amount
+    ) public onlyOwner {
+        ERC20(token).approve(spender, amount);
+    }
+
+    function defendLowerBound(
+        uint256 amount,
+        address stableCoin
+    ) external onlyTM {
         uint256 currentPrice = gcoin.getGCoinValue();
         /*
         Figure out how to get traded price, maybe this is just manually controled by TM
@@ -82,10 +93,10 @@ why the AMM price go up above 1.02? If so, arbitrager will mint from GCoin and s
 
  */
 
-    function defendUpperBound(uint256 amount, address stableCoin)
-        external
-        onlyTM
-    {
+    function defendUpperBound(
+        uint256 amount,
+        address stableCoin
+    ) external onlyTM {
         uint256 currentPrice = gcoin.getGCoinValue();
         /*
         Figure out how to get traded price, maybe this is just manually controled by TM
@@ -115,31 +126,31 @@ why the AMM price go up above 1.02? If so, arbitrager will mint from GCoin and s
         _;
     }
 
-    function addToLiquidReserve(address asset, uint256 amount)
-        external
-        onlyOwner
-    {
+    function addToLiquidReserve(
+        address asset,
+        uint256 amount
+    ) external onlyOwner {
         liquidReserve[asset] = liquidReserve[asset].add(amount);
     }
 
-    function removeFromLiquidReserve(address asset, uint256 amount)
-        external
-        onlyOwner
-    {
+    function removeFromLiquidReserve(
+        address asset,
+        uint256 amount
+    ) external onlyOwner {
         liquidReserve[asset] = liquidReserve[asset].sub(amount);
     }
 
-    function addToIlliquidReserve(address asset, uint256 amount)
-        external
-        onlyOwner
-    {
+    function addToIlliquidReserve(
+        address asset,
+        uint256 amount
+    ) external onlyOwner {
         illiquidReserve[asset] = illiquidReserve[asset].add(amount);
     }
 
-    function removeFromIlliquidReserve(address asset, uint256 amount)
-        external
-        onlyOwner
-    {
+    function removeFromIlliquidReserve(
+        address asset,
+        uint256 amount
+    ) external onlyOwner {
         illiquidReserve[asset] = illiquidReserve[asset].sub(amount);
     }
 
