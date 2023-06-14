@@ -37,6 +37,11 @@ contract GCoinTest is Test {
         gcoin = new GCoin();
         address[] memory arr = new address[](0);
         treasury = new Treasury(address(gcoin), msg.sender, arr, arr);
+        treasury.approveFor(
+            address(stablecoin6digit),
+            address(gcoin),
+            type(uint256).max
+        );
 
         // Set treasury address in the GCoin contract
         gcoin.setTreasury(address(treasury));
@@ -115,10 +120,6 @@ contract GCoinTest is Test {
         gcoin.addStableCoin(address(stablecoin6digit));
         stablecoin6digit.mint(gcoin.treasury(), 4e6);
         gcoin.mint(address(this), 1e18);
-
-        vm.startPrank(address(gcoin.treasury()));
-        stablecoin6digit.approve(address(gcoin), 1e18);
-        vm.stopPrank();
 
         gcoin.withdrawStableCoin(address(stablecoin6digit), 1e18);
 

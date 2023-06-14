@@ -10,8 +10,7 @@ import "../src/CGV.sol";
 
 /**
  * Deploys all contracts including CGV and USDTest, intended for local and testnet
- * Mints 1B CGV to TEST_WALLET
- * Mints 1M USDTest to TEST_WALLET
+ * Mints 1M CGV to TEST_WALLET
  */
 contract DeployTestnetScript is Script {
     function run() external {
@@ -21,29 +20,35 @@ contract DeployTestnetScript is Script {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        address testWallet = vm.envAddress("TEST_WALLET");
+        address deployer = vm.envAddress("DEPLOYER");
 
         USDTest usdTest = new USDTest();
-        usdTest.mint(testWallet, 1_000_000e6);
 
         CGV cgv = new CGV();
-        cgv.mint(testWallet, 1_000_000e6);
+        cgv.mint(deployer, 1_000_000e6);
 
         GCoin gcoin = new GCoin();
 
         address[] memory arr = new address[](0);
         Treasury treasury = new Treasury(address(gcoin), msg.sender, arr, arr);
+        cgv.mint(address(treasury), 10_000_000e6);
 
         gcoin.setTreasury(address(treasury));
 
         gcoin.addStableCoin(address(usdTest));
+
+        treasury.approveFor(
+            address(usdTest),
+            address(gcoin),
+            type(uint256).max
+        );
 
         GCoinStaking gCoinStaking = new GCoinStaking(
             address(gcoin),
             address(cgv),
             100
         );
-        cgv.mint(address(gCoinStaking), 10_000_000e6);
+        gCoinStaking.setTreasury(address(treasury));
 
         vm.stopBroadcast();
 
