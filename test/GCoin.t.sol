@@ -73,6 +73,7 @@ contract GCoinTest is Test {
 
     // Test that minting succeeds with a 6-decimal stablecoin
     function test_Mint_6digit() public {
+        gcoin.updateMintingFee(100);
         gcoin.addStableCoin(address(stablecoin6digit));
         stablecoin6digit.approve(address(gcoin), 1000000);
         gcoin.depositStableCoin(address(stablecoin6digit), 1000000);
@@ -83,6 +84,7 @@ contract GCoinTest is Test {
 
     // Test that minting succeeds with a different gCoin value
     function test_Mint_gValue() public {
+        gcoin.updateMintingFee(100);
         gcoin.updateGCoinValueManual(2e18);
         gcoin.addStableCoin(address(stablecoin6digit));
         stablecoin6digit.approve(address(gcoin), 1000000);
@@ -116,6 +118,7 @@ contract GCoinTest is Test {
     }
 
     function test_Redemption() public {
+        gcoin.updateRedemptionFee(100);
         gcoin.updateGCoinValueManual(2e18);
         gcoin.addStableCoin(address(stablecoin6digit));
         stablecoin6digit.mint(gcoin.treasury(), 4e6);

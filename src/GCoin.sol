@@ -12,7 +12,8 @@ contract GCoin is ERC20, Ownable, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
-    uint256 public mintingFee = 1; // 1% fee
+    uint256 public mintingFee = 10; // 0.10% fee
+    uint256 public redemptionFee = 100; // 1.00% fee
     uint256 public gcoinValue;
 
     AggregatorV3Interface public gcoinPriceFeed;
@@ -57,8 +58,8 @@ contract GCoin is ERC20, Ownable, Pausable {
             .div(10 ** uint256(stableCoins[token].decimals()))
             .mul(10 ** uint256(decimals()))
             .div(gcoinValue)
-            .mul(100 - mintingFee)
-            .div(100);
+            .mul(10000 - mintingFee)
+            .div(10000);
         return gcoinAmount;
     }
 
@@ -103,8 +104,8 @@ contract GCoin is ERC20, Ownable, Pausable {
                 .div(10 ** uint256(decimals()))
                 .mul(gcoinValue)
                 .div(10 ** uint256(decimals()))
-                .mul(100 - mintingFee)
-                .div(100);
+                .mul(10000 - redemptionFee)
+                .div(10000);
     }
 
     function withdrawStableCoin(
@@ -144,6 +145,10 @@ contract GCoin is ERC20, Ownable, Pausable {
 
     function updateMintingFee(uint256 mintingFeeNew) external onlyOwner {
         mintingFee = mintingFeeNew;
+    }
+
+    function updateRedemptionFee(uint256 redemptionFeeNew) external onlyOwner {
+        redemptionFee = redemptionFeeNew;
     }
 
     function mint(address to, uint256 amount) external onlyOwner {
