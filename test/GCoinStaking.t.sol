@@ -26,6 +26,9 @@ contract GCoinStakingTest is Test {
     address public stakeholder;
 
     function setUp() public {
+        // Set to Jan 1, 2023
+        vm.warp(1672549200);
+
         gcoin = new GCoin();
         address[] memory arr = new address[](0);
         treasury = new Treasury(address(gcoin), msg.sender, arr, arr);
@@ -92,11 +95,14 @@ contract GCoinStakingTest is Test {
         gcoin.approve(address(staking), 1e18);
         staking.stake(1e18, 30 days);
 
-        uint256 t0 = block.timestamp;
-        vm.warp(t0 + 30 days);
+        skip(30 days);
 
         assert(
             staking.getUserStakingInfoList(stakeholder)[0].claimedReward == 0
+        );
+        assert(
+            staking.getUserStakingInfoList(stakeholder)[0].unclaimedReward ==
+                8219
         );
         assert(cgv.balanceOf(stakeholder) == 0);
 
@@ -106,15 +112,57 @@ contract GCoinStakingTest is Test {
         assert(
             staking.getUserStakingInfoList(stakeholder)[0].claimedReward == 8219
         );
+        assert(
+            staking.getUserStakingInfoList(stakeholder)[0].unclaimedReward == 0
+        );
 
-        vm.warp(t0 + 60 days);
+        skip(30 days);
 
+        assert(
+            staking.getUserStakingInfoList(stakeholder)[0].unclaimedReward ==
+                8219
+        );
         staking.withdrawRewardSpecific(0);
         assert(cgv.balanceOf(stakeholder) == 8219 * 2);
         assert(
             staking.getUserStakingInfoList(stakeholder)[0].claimedReward ==
                 8219 * 2
         );
+        assert(
+            staking.getUserStakingInfoList(stakeholder)[0].unclaimedReward == 0
+        );
+
+        vm.stopPrank();
+    }
+
+    function test_WithdrawMultiple() public {
+        vm.startPrank(stakeholder);
+        gcoin.approve(address(staking), 100e18);
+        staking.stake(1e18, 30 days);
+
+        skip(10 days);
+
+        staking.stake(3e18, 30 days);
+        staking.stake(2e18, 30 days);
+        assert(staking.getUserStakingInfoList(stakeholder).length == 3);
+
+        staking.withdrawSpecific(0);
+        assert(staking.getUserStakingInfoList(stakeholder).length == 3);
+
+        vm.expectRevert();
+        staking.withdrawSpecific(3);
+
+        skip(20 days);
+
+        staking.withdrawRewardSpecific(0);
+        skip(1 days);
+
+        staking.withdrawSpecific(0);
+        assert(staking.getUserStakingInfoList(stakeholder).length == 2);
+
+        skip(10 days);
+        staking.withdrawAll();
+        assert(staking.getUserStakingInfoList(stakeholder).length == 0);
 
         vm.stopPrank();
     }

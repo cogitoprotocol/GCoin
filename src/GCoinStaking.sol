@@ -124,9 +124,11 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
             if (stakedDuration >= currentStake.duration) {
                 uint256 unclaimedReward = calculateReward(
                     currentStake.amount,
-                    currentStake.duration,
+                    stakedDuration,
                     currentStake.rewardMultiplier
                 ) - currentStake.claimedReward;
+
+                require(unclaimedReward > 0, "bad unclaimedReward");
 
                 totalRewards = totalRewards.add(unclaimedReward);
                 totalAmount = totalAmount.add(currentStake.amount);
@@ -164,10 +166,11 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         if (stakedDuration >= currentStake.duration) {
             uint256 unclaimedReward = calculateReward(
                 currentStake.amount,
-                currentStake.duration,
+                stakedDuration,
                 currentStake.rewardMultiplier
             ) - currentStake.claimedReward;
 
+            require(unclaimedReward > 0, "bad unclaimedReward");
             require(
                 cgvToken.balanceOf(treasury) >= unclaimedReward,
                 "Not enough CGV tokens to pay rewards. We are adding more. Please wait"
@@ -199,6 +202,7 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
                 currentStake.rewardMultiplier
             ) - currentStake.claimedReward;
 
+            require(unclaimedReward > 0, "bad unclaimedReward");
             require(
                 cgvToken.balanceOf(treasury) >= unclaimedReward,
                 "Not enough CGV tokens to pay rewards. We are adding more. Please wait"
