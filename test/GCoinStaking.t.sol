@@ -35,11 +35,12 @@ contract GCoinStakingTest is Test {
         // mint some gcoin
         stakeholder = address(111);
         stablecoin0 = new MockToken("T0", "T0");
-        stablecoin0.mint(stakeholder, 2e18);
+        stablecoin0.mint(stakeholder, 100e18);
         gcoin.addStableCoin(address(stablecoin0));
+
         vm.startPrank(stakeholder);
-        stablecoin0.approve(address(gcoin), 2e18);
-        gcoin.depositStableCoin(address(stablecoin0), 2e18);
+        stablecoin0.approve(address(gcoin), 100e18);
+        gcoin.depositStableCoin(address(stablecoin0), 100e18);
         vm.stopPrank();
 
         // set CGV tokens
@@ -47,7 +48,12 @@ contract GCoinStakingTest is Test {
 
         staking = new GCoinStaking(address(gcoin), address(cgv), 10);
 
-        cgv.mint(address(staking), 1e18);
+        // Set up treasury
+        staking.setTreasury(address(treasury));
+        cgv.mint(address(treasury), 1e18);
+
+        vm.prank(address(treasury));
+        cgv.approve(address(staking), 1e18);
     }
 
     function test_Stake() public {
@@ -69,10 +75,55 @@ contract GCoinStakingTest is Test {
     function test_StakeReward() public {
         staking.updateAnnualRewardRate(10);
 
-        uint256 rewardRate = staking.calculateRewardRate(365 days);
-        assert(rewardRate == 15);
+        uint256 r0 = staking.calculateRewardRate(30 days);
+        assert(r0 == 10);
 
-        uint256 reward = staking.calculateReward(100e18, 365 days, rewardRate);
+        uint256 r1 = staking.calculateRewardRate(365 days);
+        assert(r1 == 15);
+
+        uint256 reward = staking.calculateReward(100e18, 365 days, r1);
         assert(reward == 15e6);
+    }
+
+    function test_WithdrawReward() public {
+        staking.updateAnnualRewardRate(10);
+
+        vm.startPrank(stakeholder);
+        gcoin.approve(address(staking), 1e18);
+        staking.stake(1e18, 30 days);
+
+        uint256 t0 = block.timestamp;
+        vm.warp(t0 + 30 days);
+
+        assert(
+            staking
+                .getUserStakingInfoList(stakeholder)
+                .stakes[0]
+                .claimedReward == 0
+        );
+        assert(cgv.balanceOf(stakeholder) == 0);
+
+        staking.withdrawRewardSpecific(0);
+
+        assert(cgv.balanceOf(stakeholder) == 8219);
+        assert(
+            staking
+                .getUserStakingInfoList(stakeholder)
+                .stakes[0]
+                .claimedReward == 8219
+        );
+
+        vm.warp(t0 + 60 days);
+
+        staking.withdrawRewardSpecific(0);
+        assert(cgv.balanceOf(stakeholder) == 8219 * 2);
+        assert(
+            staking
+                .getUserStakingInfoList(stakeholder)
+                .stakes[0]
+                .claimedReward == 8219 * 2
+        );
+
+        vm.stopPrank();
     }
 }

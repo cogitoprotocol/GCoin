@@ -175,8 +175,8 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         }
     }
 
-    // Users can withdraw their matured award only
-    function withdrawAwardSpecific(
+    // Users can withdraw their matured reward only
+    function withdrawRewardSpecific(
         uint256 index
     ) external nonReentrant whenNotPaused {
         UserInfo storage userInfo = userStakingInfo[msg.sender];
@@ -186,15 +186,15 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
         if (stakedDuration >= currentStake.duration) {
             uint256 unclaimedReward = calculateReward(
                 currentStake.amount,
-                currentStake.duration,
+                stakedDuration,
                 currentStake.rewardMultiplier
             ) - currentStake.claimedReward;
 
             require(
-                cgvToken.balanceOf(address(this)) >= unclaimedReward,
+                cgvToken.balanceOf(treasury) >= unclaimedReward,
                 "Not enough CGV tokens to pay rewards. We are adding more. Please wait"
             );
-            currentStake.claimedReward = unclaimedReward;
+            currentStake.claimedReward += unclaimedReward;
             cgvToken.safeTransferFrom(treasury, msg.sender, unclaimedReward);
         }
     }
@@ -247,19 +247,19 @@ contract GCoinStaking is Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Owner can update the min staking duration
      */
-    function update_min_staking_duration(
-        uint256 _min_staking_duration
+    function updateMinStakingDuration(
+        uint256 _minStakingDuration
     ) external onlyOwner {
-        MIN_STAKING_DURATION = _min_staking_duration;
+        MIN_STAKING_DURATION = _minStakingDuration;
     }
 
     /**
      * @dev Owner can update the min staking duration
      */
-    function update_max_staking_duration(
-        uint256 _max_staking_duration
+    function updateMaxStakingDuration(
+        uint256 _maxStakingDuration
     ) external onlyOwner {
-        MAX_STAKING_DURATION = _max_staking_duration;
+        MAX_STAKING_DURATION = _maxStakingDuration;
     }
 
     function pause() external onlyOwner {
