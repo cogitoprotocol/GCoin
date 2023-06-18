@@ -24,7 +24,7 @@ To build and test:
 
 ```sh
 forge build
-forge test -vv
+forge test
 ```
 
 ## Deploying to localhost
