@@ -21,6 +21,10 @@ contract GCoin is ERC20, Ownable, Pausable {
 
     address public treasury;
 
+    event PriceUpdatedManual(uint256 newprice);
+    event Paused();
+    event Unpaused();
+
     constructor() ERC20("GCoin", "GC") {
         gcoinValue = 1e18; // Initial value set to 1 stable coin
     }
@@ -141,6 +145,7 @@ contract GCoin is ERC20, Ownable, Pausable {
 
     function updateGCoinValueManual(uint256 manualValue) external onlyOwner {
         gcoinValue = manualValue;
+        emit PriceUpdatedManual(manualValue);
     }
 
     function updateMintingFee(uint256 mintingFeeNew) external onlyOwner {
@@ -161,9 +166,11 @@ contract GCoin is ERC20, Ownable, Pausable {
 
     function pause() external onlyOwner {
         _pause();
+        emit Paused();
     }
 
     function unpause() external onlyOwner {
         _unpause();
+        emit Unpaused();
     }
 }
